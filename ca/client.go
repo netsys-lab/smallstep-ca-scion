@@ -513,13 +513,18 @@ func NewClient(endpoint string, opts ...ClientOption) (*Client, error) {
 	if err := o.apply(opts); err != nil {
 		return nil, err
 	}
-	tr, err := o.getTransport(endpoint)
+	// FIXME: For now, we're always connecting using insecureSkipVerify
+	// The point is: SCION enforces x509v3 ExtKeyUsage for root certificates
+	// Set to ROOT and TimeStamping, and this makes the "secure" client
+	// fail to connect to the CA. There might be a better version
+	// later on but for now to generate the inital certs, we keep it like this.
+	/*tr, err := o.getTransport(endpoint)
 	if err != nil {
 		return nil, err
-	}
+	}*/
 
 	return &Client{
-		client:    newClient(tr),
+		client:    newInsecureClient(),
 		endpoint:  u,
 		retryFunc: o.retryFunc,
 		opts:      opts,
