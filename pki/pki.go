@@ -561,8 +561,6 @@ func (p *PKI) GenerateIntermediateCertificate(name, org, resource string, parent
 		p.IntermediateKey = uri
 	}
 
-	// pr := strings.ReplaceAll(provisioner, "\"", "")
-
 	resp, err := p.caCreator.CreateCertificateAuthority(&apiv1.CreateCertificateAuthorityRequest{
 		Name:     resource + "-Intermediate-CA",
 		Type:     apiv1.IntermediateCA,
