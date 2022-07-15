@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/asn1"
 	"encoding/hex"
 	"encoding/json"
 	"encoding/pem"
@@ -555,10 +556,12 @@ func (p *PKI) WriteRootCertificate(rootCrt *x509.Certificate, rootKey interface{
 
 // GenerateIntermediateCertificate generates an intermediate certificate with
 // the given name and using the default key type.
-func (p *PKI) GenerateIntermediateCertificate(name, org, resource string, parent *apiv1.CreateCertificateAuthorityResponse, pass []byte) error {
+func (p *PKI) GenerateIntermediateCertificate(name, org, resource string, parent *apiv1.CreateCertificateAuthorityResponse, pass []byte, provisioner string) error {
 	if uri := p.options.intermediateKeyURI; uri != "" {
 		p.IntermediateKey = uri
 	}
+
+	// pr := strings.ReplaceAll(provisioner, "\"", "")
 
 	resp, err := p.caCreator.CreateCertificateAuthority(&apiv1.CreateCertificateAuthorityRequest{
 		Name:     resource + "-Intermediate-CA",
@@ -570,8 +573,13 @@ func (p *PKI) GenerateIntermediateCertificate(name, org, resource string, parent
 		},
 		Template: &x509.Certificate{
 			Subject: pkix.Name{
-				CommonName:   name + " Intermediate CA",
-				Organization: []string{org},
+				CommonName: fmt.Sprintf("%s CA Certificate", provisioner),
+				ExtraNames: []pkix.AttributeTypeAndValue{
+					{
+						Type:  asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 55324, 1, 2, 1},
+						Value: provisioner,
+					},
+				},
 			},
 			KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
 			BasicConstraintsValid: true,
