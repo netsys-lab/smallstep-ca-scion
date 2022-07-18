@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/x509"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -163,6 +164,14 @@ func (p *JWK) AuthorizeSign(ctx context.Context, token string) ([]SignOption, er
 
 	// Certificate templates
 	data := x509util.CreateTemplateData(claims.Subject, claims.SANs)
+	sj := data["Subject"].(x509util.Subject)
+	sj.ExtraNames = []x509util.DistinguishedName{
+		{
+			Type:  x509util.ObjectIdentifier{1, 3, 6, 1, 4, 1, 55324, 1, 2, 1},
+			Value: strings.ReplaceAll(claims.Subject, " AS Certificate", ""),
+		},
+	}
+	data["Subject"] = sj
 	if v, err := unsafeParseSigned(token); err == nil {
 		data.SetToken(v)
 	}
