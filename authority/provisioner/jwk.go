@@ -163,12 +163,16 @@ func (p *JWK) AuthorizeSign(ctx context.Context, token string) ([]SignOption, er
 	}
 
 	// Certificate templates
+	// TODO: Fix this with a template
 	data := x509util.CreateTemplateData(claims.Subject, claims.SANs)
 	sj := data["Subject"].(x509util.Subject)
+	val := strings.ReplaceAll(claims.Subject, " AS Certificate - GEN I", "")
+	val = strings.ReplaceAll(val, " AS Certificate", "")
+	val = strings.ReplaceAll(val, " - GEN I", "")
 	sj.ExtraNames = []x509util.DistinguishedName{
 		{
 			Type:  x509util.ObjectIdentifier{1, 3, 6, 1, 4, 1, 55324, 1, 2, 1},
-			Value: strings.ReplaceAll(claims.Subject, " AS Certificate", ""),
+			Value: val,
 		},
 	}
 	data["Subject"] = sj
