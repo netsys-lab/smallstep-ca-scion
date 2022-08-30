@@ -3,7 +3,9 @@ package provisioner
 import (
 	"context"
 	"crypto/x509"
+	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -148,6 +150,12 @@ func (p *JWK) AuthorizeRevoke(ctx context.Context, token string) error {
 	return errs.Wrap(http.StatusInternalServerError, err, "jwk.AuthorizeRevoke")
 }
 
+// ISD-AS always at the beginning followed by ' '
+func extractOIDFromSubject(subject string) string {
+	parts := strings.Split(subject, " ")
+	return parts[0]
+}
+
 // AuthorizeSign validates the given token.
 func (p *JWK) AuthorizeSign(ctx context.Context, token string) ([]SignOption, error) {
 	claims, err := p.authorizeToken(token, p.ctl.Audiences.Sign)
@@ -166,9 +174,35 @@ func (p *JWK) AuthorizeSign(ctx context.Context, token string) ([]SignOption, er
 	// TODO: Fix this with a template
 	data := x509util.CreateTemplateData(claims.Subject, claims.SANs)
 	sj := data["Subject"].(x509util.Subject)
-	val := strings.ReplaceAll(claims.Subject, " AS Certificate - GEN I", "")
-	val = strings.ReplaceAll(val, " AS Certificate", "")
-	val = strings.ReplaceAll(val, " - GEN I", "")
+	// val := strings.ReplaceAll(claims.Subject, " AS Certificate - GEN I", "")
+	// val = strings.ReplaceAll(val, " AS Certificate", "")
+	// val = strings.ReplaceAll(val, " - GEN I", "")
+	val := extractOIDFromSubject(claims.Subject)
+
+	country := "DE"
+	if envCountry, ok := os.LookupEnv("SCION_AS_SUBJECT_COUNTRY"); ok {
+		country = envCountry
+	}
+
+	organization := "OVGU Magdeburg for GEANT"
+	if envOrganization, ok := os.LookupEnv("SCION_AS_SUBJECT_ORGANIZATION"); ok {
+		organization = envOrganization
+	}
+
+	commonName := "SCION Education Network CA"
+	if envCommonName, ok := os.LookupEnv("SCION_AS_SUBJECT_COMMONNAME"); ok {
+		commonName = envCommonName
+	}
+
+	cn := claims.Subject
+
+	if !strings.Contains(cn, commonName) {
+		cn = fmt.Sprintf("%s - %s", claims.Subject, commonName)
+	}
+
+	sj.Country = x509util.MultiString{country}
+	sj.Organization = x509util.MultiString{organization}
+	sj.CommonName = cn
 	sj.ExtraNames = []x509util.DistinguishedName{
 		{
 			Type:  x509util.ObjectIdentifier{1, 3, 6, 1, 4, 1, 55324, 1, 2, 1},

@@ -36,6 +36,7 @@ import (
 	"go.step.sm/cli-utils/ui"
 	"go.step.sm/crypto/jose"
 	"go.step.sm/crypto/pemutil"
+	"go.step.sm/crypto/x509util"
 	"go.step.sm/linkedca"
 	"golang.org/x/crypto/ssh"
 )
@@ -561,6 +562,21 @@ func (p *PKI) GenerateIntermediateCertificate(name, org, resource string, parent
 		p.IntermediateKey = uri
 	}
 
+	country := "DE"
+	if envCountry, ok := os.LookupEnv("SCION_CA_SUBJECT_COUNTRY"); ok {
+		country = envCountry
+	}
+
+	organization := "OVGU Magdeburg for GEANT"
+	if envOrganization, ok := os.LookupEnv("SCION_CA_SUBJECT_ORGANIZATION"); ok {
+		organization = envOrganization
+	}
+
+	commonName := "SCION Education Network CA"
+	if envCommonName, ok := os.LookupEnv("SCION_CA_SUBJECT_COMMONNAME"); ok {
+		commonName = envCommonName
+	}
+
 	resp, err := p.caCreator.CreateCertificateAuthority(&apiv1.CreateCertificateAuthorityRequest{
 		Name:     resource + "-Intermediate-CA",
 		Type:     apiv1.IntermediateCA,
@@ -571,7 +587,9 @@ func (p *PKI) GenerateIntermediateCertificate(name, org, resource string, parent
 		},
 		Template: &x509.Certificate{
 			Subject: pkix.Name{
-				CommonName: fmt.Sprintf("%s CA Certificate", provisioner),
+				Country:      x509util.MultiString{country},
+				Organization: x509util.MultiString{organization},
+				CommonName:   fmt.Sprintf("%s CA Certificate - %s", provisioner, commonName),
 				ExtraNames: []pkix.AttributeTypeAndValue{
 					{
 						Type:  asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 55324, 1, 2, 1},
