@@ -186,7 +186,7 @@ func onboardPKI(cfg onboardingConfiguration) (*config.Config, string, error) {
 	}
 
 	ui.Println("Generating intermediate certificate...")
-	err = p.GenerateIntermediateCertificate(cfg.Name, cfg.Name, cfg.Name, root, cfg.password, cfg.Name)
+	err = p.GenerateIntermediateCertificate(cfg.Name, cfg.Name, cfg.Name, root, cfg.password)
 	if err != nil {
 		return nil, "", err
 	}

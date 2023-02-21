@@ -557,7 +557,7 @@ func (p *PKI) WriteRootCertificate(rootCrt *x509.Certificate, rootKey interface{
 
 // GenerateIntermediateCertificate generates an intermediate certificate with
 // the given name and using the default key type.
-func (p *PKI) GenerateIntermediateCertificate(name, org, resource string, parent *apiv1.CreateCertificateAuthorityResponse, pass []byte, provisioner string) error {
+func (p *PKI) GenerateIntermediateCertificate(name, org, resource string, parent *apiv1.CreateCertificateAuthorityResponse, pass []byte) error {
 	if uri := p.options.intermediateKeyURI; uri != "" {
 		p.IntermediateKey = uri
 	}
@@ -575,6 +575,11 @@ func (p *PKI) GenerateIntermediateCertificate(name, org, resource string, parent
 	commonName := "SCION Education Network CA"
 	if envCommonName, ok := os.LookupEnv("SCION_CA_SUBJECT_COMMONNAME"); ok {
 		commonName = envCommonName
+	}
+
+	provisioner := "71-20295"
+	if envProvisioner, ok := os.LookupEnv("SCION_CA_PROVISIONER"); ok {
+		provisioner = envProvisioner
 	}
 
 	resp, err := p.caCreator.CreateCertificateAuthority(&apiv1.CreateCertificateAuthorityRequest{
