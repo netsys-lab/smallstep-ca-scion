@@ -6,7 +6,6 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"encoding/asn1"
 	"encoding/hex"
 	"encoding/json"
 	"encoding/pem"
@@ -582,6 +581,17 @@ func (p *PKI) GenerateIntermediateCertificate(name, org, resource string, parent
 		provisioner = envProvisioner
 	}
 
+	sj := pkix.Name{}
+	sj.Country = x509util.MultiString{country}
+	sj.Organization = x509util.MultiString{organization}
+	sj.CommonName = fmt.Sprintf("%s CA Certificate - %s", provisioner, commonName)
+	sj.ExtraNames = []x509util.DistinguishedName{
+		{
+			Type:  x509util.ObjectIdentifier{1, 3, 6, 1, 4, 1, 55324, 1, 2, 1},
+			Value: provisioner,
+		},
+	}
+
 	resp, err := p.caCreator.CreateCertificateAuthority(&apiv1.CreateCertificateAuthorityRequest{
 		Name:     resource + "-Intermediate-CA",
 		Type:     apiv1.IntermediateCA,
@@ -591,17 +601,18 @@ func (p *PKI) GenerateIntermediateCertificate(name, org, resource string, parent
 			SignatureAlgorithm: kmsapi.UnspecifiedSignAlgorithm,
 		},
 		Template: &x509.Certificate{
-			Subject: pkix.Name{
-				Country:      x509util.MultiString{country},
-				Organization: x509util.MultiString{organization},
-				CommonName:   fmt.Sprintf("%s CA Certificate - %s", provisioner, commonName),
-				ExtraNames: []pkix.AttributeTypeAndValue{
-					{
-						Type:  asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 55324, 1, 2, 1},
-						Value: provisioner,
-					},
-				},
-			},
+			//Subject: pkix.Name{
+			//	Country:      x509util.MultiString{country},
+			//	Organization: x509util.MultiString{organization},
+			//	CommonName:   fmt.Sprintf("%s CA Certificate - %s", provisioner, commonName),
+			//	ExtraNames: []pkix.AttributeTypeAndValue{
+			//		{
+			//			Type:  asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 55324, 1, 2, 1},
+			//			Value: provisioner,
+			//		},
+			//	},
+			//},
+			Subject:               sj,
 			KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
 			BasicConstraintsValid: true,
 			IsCA:                  true,
