@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/asn1"
 	"encoding/hex"
 	"encoding/json"
 	"encoding/pem"
@@ -585,9 +586,9 @@ func (p *PKI) GenerateIntermediateCertificate(name, org, resource string, parent
 	sj.Country = x509util.MultiString{country}
 	sj.Organization = x509util.MultiString{organization}
 	sj.CommonName = fmt.Sprintf("%s CA Certificate - %s", provisioner, commonName)
-	sj.ExtraNames = []x509util.DistinguishedName{
+	sj.ExtraNames = []pkix.AttributeTypeAndValue{
 		{
-			Type:  x509util.ObjectIdentifier{1, 3, 6, 1, 4, 1, 55324, 1, 2, 1},
+			Type:  asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 55324, 1, 2, 1},
 			Value: provisioner,
 		},
 	}
