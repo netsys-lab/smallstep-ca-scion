@@ -180,7 +180,10 @@ func (p *JWK) AuthorizeSign(ctx context.Context, token string) ([]SignOption, er
 	val := extractOIDFromSubject(claims.Subject)
 	fmt.Println(sj.ExtraNames)
 	if len(sj.ExtraNames) == 1 {
-		val = sj.ExtraNames[0].Value
+		str, ok := sj.ExtraNames[0].Value.(string)
+		if ok {
+			val = str
+		}
 	}
 
 	country := "DE"
