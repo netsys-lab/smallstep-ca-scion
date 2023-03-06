@@ -178,7 +178,7 @@ func (p *JWK) AuthorizeSign(ctx context.Context, token string) ([]SignOption, er
 	// val = strings.ReplaceAll(val, " AS Certificate", "")
 	// val = strings.ReplaceAll(val, " - GEN I", "")
 	val := extractOIDFromSubject(claims.Subject)
-	fmt.Println(sj.ExtraNames)
+	fmt.Println(claims)
 	if len(sj.ExtraNames) == 1 {
 		str, ok := sj.ExtraNames[0].Value.(string)
 		if ok {
